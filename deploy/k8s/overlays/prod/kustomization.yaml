@@ -5,4 +5,4 @@ resources:
   - ingress.yaml
 images:
   - name: registry.144.91.77.245.sslip.io/homelendingadvisor
-    newTag: f4c8b2505466341e90e52684c2df08dc33f1956c
+    newTag: cb4925b039b0b794fc42e01cb9fc3c2a93f88d06
