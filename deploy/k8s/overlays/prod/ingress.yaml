@@ -13,19 +13,8 @@ spec:
     - secretName: homelendingadvisor-live-tls
       hosts:
         - homelendingadvisor.lol
-        - www.homelendingadvisor.lol
   rules:
     - host: homelendingadvisor.lol
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: homelendingadvisor
-                port:
-                  number: 80
-    - host: www.homelendingadvisor.lol
       http:
         paths:
           - path: /
