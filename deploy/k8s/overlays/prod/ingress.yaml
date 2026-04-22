@@ -3,17 +3,29 @@ kind: Ingress
 metadata:
   name: homelendingadvisor
   annotations:
+    acme.cert-manager.io/http01-edit-in-place: "true"
     cert-manager.io/cluster-issuer: letsencrypt-prod
     cert-manager.io/issue-temporary-certificate: "true"
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
 spec:
   ingressClassName: nginx
   tls:
-    - secretName: homelendingadvisor-apex-tls
+    - secretName: homelendingadvisor-live-tls
       hosts:
         - homelendingadvisor.lol
+        - www.homelendingadvisor.lol
   rules:
     - host: homelendingadvisor.lol
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: homelendingadvisor
+                port:
+                  number: 80
+    - host: www.homelendingadvisor.lol
       http:
         paths:
           - path: /
