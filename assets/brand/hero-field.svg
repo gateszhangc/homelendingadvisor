@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Home lending advisory field</title>
+  <desc id="desc">A refined architectural lending diagram with home geometry, ledgers, and advisory paths.</desc>
+  <rect width="1600" height="1000" fill="#12413a"/>
+  <rect x="0" y="0" width="1600" height="1000" fill="#0d302c" opacity=".44"/>
+  <g opacity=".16" stroke="#f8f8f4" stroke-width="1">
+    <path d="M0 120h1600M0 220h1600M0 320h1600M0 420h1600M0 520h1600M0 620h1600M0 720h1600M0 820h1600M0 920h1600"/>
+    <path d="M120 0v1000M240 0v1000M360 0v1000M480 0v1000M600 0v1000M720 0v1000M840 0v1000M960 0v1000M1080 0v1000M1200 0v1000M1320 0v1000M1440 0v1000"/>
+  </g>
+  <g opacity=".22" fill="none" stroke="#d7eaf2" stroke-width="3">
+    <path d="M904 150h420v198H904z"/>
+    <path d="M944 190h340M944 236h286M944 282h320"/>
+    <path d="M992 410h420v234H992z"/>
+    <path d="M1034 456h334M1034 506h270M1034 556h310M1034 606h196"/>
+  </g>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M745 648 995 398l250 250" stroke="#f8f8f4" stroke-width="42" opacity=".9"/>
+    <path d="M824 648v198h342V648" stroke="#f8f8f4" stroke-width="42" opacity=".9"/>
+    <path d="M908 846V630h174v216" stroke="#d7eaf2" stroke-width="24" opacity=".78"/>
+    <path d="M650 764c154-162 356-248 608-257" stroke="#b66b3e" stroke-width="24"/>
+  </g>
+  <circle cx="1270" cy="506" r="26" fill="#b66b3e"/>
+  <circle cx="650" cy="764" r="12" fill="#f8f8f4"/>
+  <g opacity=".18" fill="#f8f8f4">
+    <rect x="96" y="132" width="360" height="18" rx="9"/>
+    <rect x="96" y="184" width="270" height="18" rx="9"/>
+    <rect x="96" y="236" width="310" height="18" rx="9"/>
+    <rect x="96" y="802" width="420" height="18" rx="9"/>
+    <rect x="96" y="856" width="330" height="18" rx="9"/>
+  </g>
+  <path d="M0 0h1600v1000H0z" fill="url(#vignette)"/>
+  <defs>
+    <radialGradient id="vignette" cx="74%" cy="52%" r="70%">
+      <stop offset="0" stop-color="#12413a" stop-opacity="0"/>
+      <stop offset=".64" stop-color="#0d302c" stop-opacity=".22"/>
+      <stop offset="1" stop-color="#061c19" stop-opacity=".74"/>
+    </radialGradient>
+  </defs>
+</svg>

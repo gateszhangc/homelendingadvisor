@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: homelendingadvisor
+  namespace: argocd
+spec:
+  project: homelendingadvisor
+  source:
+    repoURL: https://github.com/gateszhangc/homelendingadvisor.git
+    targetRevision: main
+    path: deploy/k8s/overlays/prod
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: homelendingadvisor
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

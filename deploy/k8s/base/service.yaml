@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: homelendingadvisor
+  labels:
+    app.kubernetes.io/name: homelendingadvisor
+    app.kubernetes.io/part-of: homelendingadvisor
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: homelendingadvisor
+    app.kubernetes.io/part-of: homelendingadvisor
+  ports:
+    - name: http
+      port: 80
+      targetPort: 3000

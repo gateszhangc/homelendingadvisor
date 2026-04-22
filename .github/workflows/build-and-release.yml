@@ -7,19 +7,19 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
-  group: artemis-2-wallpaper-release
+  group: homelendingadvisor-release
   cancel-in-progress: true
 
 env:
-  IMAGE_NAME: registry.144.91.77.245.sslip.io/dokploy-fleet-artemis-2-wallpaper-artemis-2-wallpaper
-  FLEET_REPO: gateszhangc/k8s-fleet
-  FLEET_TENANT_PATH: tenants/artemis-2-wallpaper/20-artemis-2-wallpaper-deployment.yaml
+  IMAGE_NAME: registry.144.91.77.245.sslip.io/homelendingadvisor
+  KUSTOMIZATION_FILE: deploy/k8s/overlays/prod/kustomization.yaml
 
 jobs:
   build-and-push:
+    if: github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[skip ci]')
     runs-on: ubuntu-latest
     outputs:
       image_tag: ${{ steps.meta.outputs.image_tag }}
@@ -49,50 +49,74 @@ jobs:
           push: true
           tags: ${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.image_tag }}
 
-  update-fleet:
+  update-gitops-tag:
+    if: github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[skip ci]')
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
-      - name: Check out fleet repo
+      - name: Check out code
         uses: actions/checkout@v4
         with:
-          repository: ${{ env.FLEET_REPO }}
-          token: ${{ secrets.FLEET_REPO_PAT }}
-          path: k8s-fleet
+          fetch-depth: 0
 
-      - name: Update deployment image tag
+      - name: Update image tag
         env:
           IMAGE_TAG: ${{ needs.build-and-push.outputs.image_tag }}
         run: |
           python3 - <<'PY'
-          import os
-          import re
           from pathlib import Path
+          import os
 
-          path = Path("k8s-fleet") / os.environ["FLEET_TENANT_PATH"]
-          content = path.read_text()
-          updated, count = re.subn(
-              r"(^\s*image:\s*registry\.144\.91\.77\.245\.sslip\.io/dokploy-fleet-artemis-2-wallpaper-artemis-2-wallpaper:).*$",
-              rf"\1{os.environ['IMAGE_TAG']}",
-              content,
-              count=1,
-              flags=re.MULTILINE,
-          )
-          if count != 1:
-              raise SystemExit("Expected exactly one image line to update in the fleet deployment manifest.")
-          path.write_text(updated)
+          path = Path(os.environ["KUSTOMIZATION_FILE"])
+          image_name = os.environ["IMAGE_NAME"]
+          image_tag = os.environ["IMAGE_TAG"]
+
+          lines = path.read_text().splitlines()
+          inside_images = False
+          current_image = None
+          updated = False
+
+          for index, line in enumerate(lines):
+            stripped = line.strip()
+            if stripped == "images:":
+              inside_images = True
+              current_image = None
+              continue
+
+            if inside_images and stripped and not line.startswith((" ", "\t", "-")):
+              inside_images = False
+              current_image = None
+
+            if not inside_images:
+              continue
+
+            if stripped.startswith("- name:"):
+              current_image = stripped.split(":", 1)[1].strip()
+              continue
+
+            if stripped.startswith("name:"):
+              current_image = stripped.split(":", 1)[1].strip()
+              continue
+
+            if current_image == image_name and stripped.startswith("newTag:"):
+              prefix = line[: line.index("n")]
+              lines[index] = f"{prefix}newTag: {image_tag}"
+              updated = True
+              break
+
+          if not updated:
+            raise SystemExit(f"Unable to update newTag for {image_name} in {path}")
+
+          path.write_text("\n".join(lines) + "\n")
           PY
 
-      - name: Commit fleet update
-        env:
-          IMAGE_TAG: ${{ needs.build-and-push.outputs.image_tag }}
+      - name: Commit manifest update
         run: |
-          cd k8s-fleet
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add "$FLEET_TENANT_PATH"
-          if git diff --cached --quiet; then
+          if git diff --quiet -- "$KUSTOMIZATION_FILE"; then
             exit 0
           fi
-          git commit -m "chore: release artemis-2-wallpaper ${IMAGE_TAG}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$KUSTOMIZATION_FILE"
+          git commit -m "chore: release ${{ needs.build-and-push.outputs.image_tag }} [skip ci]"
           git push origin HEAD:main

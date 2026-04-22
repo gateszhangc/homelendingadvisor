@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Home Lending Advisor logo mark</title>
+  <desc id="desc">A precise house and advisory path mark in evergreen, copper, and sky.</desc>
+  <rect width="512" height="512" rx="64" fill="#12413a"/>
+  <path d="M88 342h336" stroke="#d7eaf2" stroke-width="18" stroke-linecap="round" opacity=".92"/>
+  <path d="M126 284 256 154l130 130" fill="none" stroke="#f8f8f4" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M166 284v104h180V284" fill="none" stroke="#f8f8f4" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M206 388V274h100v114" fill="none" stroke="#d7eaf2" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" opacity=".84"/>
+  <path d="M152 338c52-56 119-84 203-84" fill="none" stroke="#b66b3e" stroke-width="20" stroke-linecap="round"/>
+  <circle cx="360" cy="254" r="18" fill="#b66b3e"/>
+</svg>

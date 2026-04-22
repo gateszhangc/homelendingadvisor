@@ -1,15 +1,14 @@
 {
-  "name": "Artemis II Wallpaper",
-  "short_name": "Artemis II",
-  "description": "Independent editorial collection of Artemis II wallpapers using publicly released NASA imagery with source credit.",
+  "name": "Home Lending Advisor",
+  "short_name": "HLA",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#050912",
-  "theme_color": "#050912",
+  "background_color": "#f8f8f4",
+  "theme_color": "#12413a",
   "icons": [
     {
       "src": "/assets/brand/favicon.png",
-      "sizes": "256x256",
+      "sizes": "512x512",
       "type": "image/png"
     },
     {

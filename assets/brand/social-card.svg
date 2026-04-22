@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Home Lending Advisor social card</title>
+  <desc id="desc">Brand card for Home Lending Advisor with structured lending diagram.</desc>
+  <rect width="1200" height="630" fill="#f8f8f4"/>
+  <rect x="52" y="52" width="1096" height="526" rx="16" fill="#12413a"/>
+  <g opacity=".16" stroke="#f8f8f4" stroke-width="1">
+    <path d="M96 160h1008M96 244h1008M96 328h1008M96 412h1008M96 496h1008"/>
+    <path d="M210 94v442M330 94v442M450 94v442M570 94v442M690 94v442M810 94v442M930 94v442M1050 94v442"/>
+  </g>
+  <g transform="translate(98 116) scale(.54)">
+    <rect width="512" height="512" rx="64" fill="#0d302c"/>
+    <path d="M88 342h336" stroke="#d7eaf2" stroke-width="18" stroke-linecap="round" opacity=".92"/>
+    <path d="M126 284 256 154l130 130" fill="none" stroke="#f8f8f4" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M166 284v104h180V284" fill="none" stroke="#f8f8f4" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M206 388V274h100v114" fill="none" stroke="#d7eaf2" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" opacity=".84"/>
+    <path d="M152 338c52-56 119-84 203-84" fill="none" stroke="#b66b3e" stroke-width="20" stroke-linecap="round"/>
+    <circle cx="360" cy="254" r="18" fill="#b66b3e"/>
+  </g>
+  <text x="420" y="238" fill="#f8f8f4" font-family="Georgia, serif" font-size="78" letter-spacing="0">Home Lending</text>
+  <text x="420" y="326" fill="#f8f8f4" font-family="Georgia, serif" font-size="78" letter-spacing="0">Advisor</text>
+  <text x="424" y="394" fill="#d7eaf2" font-family="Arial, sans-serif" font-size="28" letter-spacing="0">Clear mortgage guidance for purchase and refinance decisions.</text>
+  <path d="M420 452h324" stroke="#b66b3e" stroke-width="8" stroke-linecap="round"/>
+</svg>
