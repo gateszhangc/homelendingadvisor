@@ -14,7 +14,11 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  APP_NAME: homelendingadvisor
+  BUILD_NAMESPACE: dokploy-fleet-build
+  BUILD_JOB_PREFIX: homelendingadvisor-build
   IMAGE_NAME: registry.144.91.77.245.sslip.io/homelendingadvisor
+  IMAGE_CACHE_REPO: registry.144.91.77.245.sslip.io/homelendingadvisor-cache
   KUSTOMIZATION_FILE: deploy/k8s/overlays/prod/kustomization.yaml
 
 jobs:
@@ -31,23 +35,122 @@ jobs:
         id: meta
         run: echo "image_tag=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
 
-      - name: Log in to registry
-        uses: docker/login-action@v3
-        with:
-          registry: registry.144.91.77.245.sslip.io
-          username: ${{ secrets.REGISTRY_USERNAME }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
+      - name: Configure kube access
+        env:
+          K8S_SERVER: ${{ secrets.K8S_BUILD_TRIGGER_SERVER }}
+          K8S_TOKEN: ${{ secrets.K8S_BUILD_TRIGGER_TOKEN }}
+          K8S_CA_CRT: ${{ secrets.K8S_BUILD_TRIGGER_CA_CRT }}
+        run: |
+          test -n "$K8S_SERVER"
+          test -n "$K8S_TOKEN"
+          test -n "$K8S_CA_CRT"
+          printf '%s\n' "$K8S_CA_CRT" > /tmp/k8s-ca.crt
+          kubectl config set-cluster build-cluster --server="$K8S_SERVER" --certificate-authority=/tmp/k8s-ca.crt
+          kubectl config set-credentials build-trigger --token="$K8S_TOKEN"
+          kubectl config set-context build-context --cluster=build-cluster --user=build-trigger --namespace="$BUILD_NAMESPACE"
+          kubectl config use-context build-context
 
-      - name: Build and push image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./Dockerfile
-          push: true
-          tags: ${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.image_tag }}
+      - name: Create git auth secret
+        env:
+          GIT_TOKEN: ${{ github.token }}
+        run: |
+          kubectl create secret generic "${APP_NAME}-build-git-auth" \
+            --namespace "$BUILD_NAMESPACE" \
+            --from-literal=token="$GIT_TOKEN" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Launch kaniko build job
+        env:
+          IMAGE_TAG: ${{ steps.meta.outputs.image_tag }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          SHORT_SHA="${IMAGE_TAG::12}"
+          JOB_NAME="${BUILD_JOB_PREFIX}-${SHORT_SHA}"
+          echo "JOB_NAME=$JOB_NAME" >> "$GITHUB_ENV"
+          kubectl delete job "$JOB_NAME" --namespace "$BUILD_NAMESPACE" --ignore-not-found
+          cat <<EOF | kubectl apply -f -
+          apiVersion: batch/v1
+          kind: Job
+          metadata:
+            name: ${JOB_NAME}
+            namespace: ${BUILD_NAMESPACE}
+            labels:
+              app.kubernetes.io/name: ${BUILD_JOB_PREFIX}
+              app.kubernetes.io/part-of: ${APP_NAME}
+          spec:
+            backoffLimit: 0
+            ttlSecondsAfterFinished: 900
+            template:
+              metadata:
+                labels:
+                  app.kubernetes.io/name: ${BUILD_JOB_PREFIX}
+                  app.kubernetes.io/part-of: ${APP_NAME}
+              spec:
+                serviceAccountName: kaniko-builder
+                restartPolicy: Never
+                initContainers:
+                  - name: checkout
+                    image: alpine:3.20
+                    command:
+                      - /bin/sh
+                      - -lc
+                    args:
+                      - |
+                        set -eu
+                        apk add --no-cache git ca-certificates
+                        git clone "https://x-access-token:\${GIT_TOKEN}@github.com/${REPOSITORY}.git" /workspace
+                        cd /workspace
+                        git fetch origin "${IMAGE_TAG}" --depth=1
+                        git checkout "${IMAGE_TAG}"
+                    env:
+                      - name: GIT_TOKEN
+                        valueFrom:
+                          secretKeyRef:
+                            name: ${APP_NAME}-build-git-auth
+                            key: token
+                    volumeMounts:
+                      - name: workspace
+                        mountPath: /workspace
+                containers:
+                  - name: kaniko
+                    image: gcr.io/kaniko-project/executor:v1.23.2-debug
+                    args:
+                      - --context=dir:///workspace
+                      - --dockerfile=/workspace/Dockerfile
+                      - --destination=${IMAGE_NAME}:${IMAGE_TAG}
+                      - --cache=true
+                      - --cache-repo=${IMAGE_CACHE_REPO}
+                    volumeMounts:
+                      - name: workspace
+                        mountPath: /workspace
+                      - name: docker-config
+                        mountPath: /kaniko/.docker
+                volumes:
+                  - name: workspace
+                    emptyDir: {}
+                  - name: docker-config
+                    secret:
+                      secretName: fleet-registry-push
+          EOF
+
+      - name: Wait for build job
+        env:
+          IMAGE_TAG: ${{ steps.meta.outputs.image_tag }}
+        run: |
+          kubectl wait --for=condition=complete "job/${JOB_NAME}" --namespace "$BUILD_NAMESPACE" --timeout=1800s || {
+            kubectl get job "${JOB_NAME}" --namespace "$BUILD_NAMESPACE" -o yaml
+            kubectl get pods --namespace "$BUILD_NAMESPACE" -l job-name="${JOB_NAME}" -o wide
+            kubectl logs --namespace "$BUILD_NAMESPACE" -l job-name="${JOB_NAME}" --all-containers=true --tail=-1 || true
+            exit 1
+          }
+          kubectl logs --namespace "$BUILD_NAMESPACE" -l job-name="${JOB_NAME}" --all-containers=true --tail=-1
+
+      - name: Clean build secret
+        if: always()
+        run: kubectl delete secret "${APP_NAME}-build-git-auth" --namespace "$BUILD_NAMESPACE" --ignore-not-found
 
   update-gitops-tag:
     if: github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[skip ci]')
@@ -111,6 +214,8 @@ jobs:
           PY
 
       - name: Commit manifest update
+        env:
+          IMAGE_TAG: ${{ needs.build-and-push.outputs.image_tag }}
         run: |
           if git diff --quiet -- "$KUSTOMIZATION_FILE"; then
             exit 0
@@ -118,5 +223,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add "$KUSTOMIZATION_FILE"
-          git commit -m "chore: release ${{ needs.build-and-push.outputs.image_tag }} [skip ci]"
+          git commit -m "chore: release ${IMAGE_TAG} [skip ci]"
           git push origin HEAD:main
